@@ -12,7 +12,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 class OfferListCreateView(generics.ListCreateAPIView):
     queryset = Offer.objects.all().order_by('-updated_at')
     serializer_class = OfferSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
     pagination_class = OfferPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
