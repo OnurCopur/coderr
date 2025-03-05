@@ -7,7 +7,7 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OfferDetail
-        fields = ['id', 'url']
+        fields = ['id', 'title', 'revisions', 'delivery_time_in_days', 'price', 'features', 'offer_type', 'url']
 
     def get_url(self, obj):
         request = self.context.get("request")
