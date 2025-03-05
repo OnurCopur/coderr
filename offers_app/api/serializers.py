@@ -67,12 +67,18 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        details_data = validated_data.pop('details')
+        details_data = self.initial_data.get('details')  # Direkt aus den rohen Eingangsdaten holen
+
         user = self.context['request'].user
+        validated_data.pop('user', None)  # Entfernt 'user', falls es bereits in validated_data existiert
         offer = Offer.objects.create(user=user, **validated_data)
-        for detail_data in details_data:
-            OfferDetail.objects.create(offer=offer, **detail_data)
+
+        if details_data:
+            for detail_data in details_data:
+                OfferDetail.objects.create(offer=offer, **detail_data)
+
         return offer
+
 
     def update(self, instance, validated_data):
         details_data = validated_data.pop('details', None)
