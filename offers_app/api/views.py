@@ -6,7 +6,7 @@ from .pagination import OfferPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class OfferListCreateView(generics.ListCreateAPIView):
@@ -19,7 +19,7 @@ class OfferListCreateView(generics.ListCreateAPIView):
     # Ermöglicht die Suche in title und description:
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at']  # Für min_price müsste man annotieren
-    parser_classes = (MultiPartParser, FormParser)  # Multipart-Parser für Bilder
+    parser_classes = (JSONParser, MultiPartParser, FormParser)  # Multipart-Parser für Bilder
 
     def get_queryset(self):
         qs = super().get_queryset()

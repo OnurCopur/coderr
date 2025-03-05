@@ -1,14 +1,21 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from ..models import Offer, OfferDetail
 
 class OfferDetailSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
     class Meta:
         model = OfferDetail
-        fields = ['id', 'title', 'revisions', 'delivery_time_in_days', 'price', 'features', 'offer_type']
+        fields = ['id', 'url']
+
+    def get_url(self, obj):
+        request = self.context.get("request")
+        return reverse("offer-detail-detail", args=[obj.id], request=request)
 
 
 class OfferSerializer(serializers.ModelSerializer):
-    details = OfferDetailSerializer(many=True)
+    details = OfferDetailSerializer(many=True, read_only=True)
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()
@@ -21,7 +28,6 @@ class OfferSerializer(serializers.ModelSerializer):
             'title',
             'image',
             'description',
-            'status',
             'created_at',
             'updated_at',
             'details',
@@ -48,14 +54,12 @@ class OfferSerializer(serializers.ModelSerializer):
         }
 
     def validate_details(self, value):
-        # Genau drei Angebotsdetails müssen angegeben werden
         if len(value) != 3:
             raise serializers.ValidationError("Exactly three offer details must be provided.")
         types = [detail['offer_type'] for detail in value]
         required_types = {'basic', 'standard', 'premium'}
         if set(types) != required_types:
             raise serializers.ValidationError("Offer details must include one each of basic, standard, and premium.")
-        # Prüfe, dass in jedem Detail mindestens ein Feature enthalten ist
         for detail in value:
             features = detail.get('features')
             if not features or not isinstance(features, list) or len(features) == 0:
@@ -65,19 +69,17 @@ class OfferSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         details_data = validated_data.pop('details')
         user = self.context['request'].user
-        validated_data.pop('user', None)  # Entfernt 'user', falls es bereits in validated_data existiert
         offer = Offer.objects.create(user=user, **validated_data)
         for detail_data in details_data:
             OfferDetail.objects.create(offer=offer, **detail_data)
         return offer
-
 
     def update(self, instance, validated_data):
         details_data = validated_data.pop('details', None)
         instance.title = validated_data.get('title', instance.title)
         instance.image = validated_data.get('image', instance.image)
         instance.description = validated_data.get('description', instance.description)
-        instance.status = validated_data.get('status', instance.status)  # HINZUGEFÜGT
+        instance.status = validated_data.get('status', instance.status)
         instance.save()
 
         if details_data:

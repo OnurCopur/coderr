@@ -51,9 +51,10 @@ class CustomLoginView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
+        email = request.data.get('email')
 
         # Authentifiziere den User mit den übergebenen Daten
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password, email=email)
 
         if user:
             # Token erstellen oder holen
@@ -64,6 +65,7 @@ class CustomLoginView(APIView):
                 'token': token.key,
                 'user_id': user.id,  
                 'username': user.username,
+                'email': user.email,
                 'role': getattr(user, 'role', 'user')  
             }, status=status.HTTP_200_OK)
         

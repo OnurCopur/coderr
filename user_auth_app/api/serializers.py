@@ -8,11 +8,12 @@ User = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
     repeated_password = serializers.CharField(write_only=True, required=True)
-    type = serializers.CharField(write_only=True, required=True)  
+    type = serializers.CharField(write_only=True, required=True)
+    user_id = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
         model = User
-        fields = ('id','username', 'email', 'password', 'repeated_password', 'type') 
+        fields = ('user_id','username', 'email', 'password', 'repeated_password', 'type') 
 
     def validate(self, data):
         if data['password'] != data['repeated_password']:
@@ -33,7 +34,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)  # Fügt den Benutzernamen hinzu
+    username = serializers.CharField(source='user.username', read_only=True) 
 
     class Meta:
         model = Profile

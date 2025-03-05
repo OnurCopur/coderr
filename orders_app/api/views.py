@@ -87,7 +87,7 @@ class OrderCountView(APIView):
     GET /orders/order-count/{business_user_id}/:
     Gibt die Anzahl der laufenden Bestellungen für einen Business-Nutzer zurück.
     """
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def get(self, request, business_user_id):
@@ -101,7 +101,7 @@ class CompletedOrderCountView(APIView):
     GET /orders/completed-order-count/{business_user_id}/:
     Gibt die Anzahl der abgeschlossenen Bestellungen für einen Business-Nutzer zurück.
     """
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def get(self, request, business_user_id):
