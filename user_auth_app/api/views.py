@@ -43,7 +43,13 @@ class RegistrationView(generics.CreateAPIView):
         return Response(response.data)
 
 
-
+from django.contrib.auth import authenticate
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 
 class CustomLoginView(APIView):
     permission_classes = [AllowAny]
@@ -51,46 +57,64 @@ class CustomLoginView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
-        email = request.data.get('email')
 
-        # Authentifiziere den User mit den übergebenen Daten
-        user = authenticate(username=username, password=password, email=email)
+        # Gast-Login Logik (Überprüfung der Gast-Benutzernamen)
+        if username in ['guest_customer', 'guest_business'] and password == 'guest':
+            # Gast-Benutzer erstellen, falls er noch nicht existiert
+            user, created = User.objects.get_or_create(
+                username=username
+            )
 
-        if user:
-            # Token erstellen oder holen
+            # Erstelle ein Dummy-Token für den Gast-Benutzer
             token, _ = Token.objects.get_or_create(user=user)
 
-            # Erfolgreiche Antwort mit Token und User-Details
+            # Erfolgreiche Antwort mit Token und Benutzer-Details
             return Response({
                 'token': token.key,
-                'user_id': user.id,  
+                'user_id': user.id,
                 'username': user.username,
-                'email': user.email,
-                'role': getattr(user, 'role', 'user')  
+                'role': 'guest'  # Hier eine spezielle Rolle für Gast-Benutzer
             }, status=status.HTTP_200_OK)
-        
+
+        # Normale Benutzer-Authentifizierung
+        user = authenticate(username=username, password=password)
+
+        if user:
+            # Token für den normalen Benutzer erstellen oder holen
+            token, _ = Token.objects.get_or_create(user=user)
+
+            # Erfolgreiche Antwort mit Token und Benutzer-Details
+            return Response({
+                'token': token.key,
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,  # E-Mail bleibt für normale Benutzer
+                'role': getattr(user, 'role', 'user')  # Normale Benutzer erhalten ihre Rolle
+            }, status=status.HTTP_200_OK)
+
         # Fehlerfall, wenn die Anmeldedaten nicht stimmen
         return Response({"error": "Ungültige Anmeldedaten"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GuestLoginView(APIView):
-    permission_classes = [AllowAny]
 
-    def post(self, request):
-        guest_type = request.data.get('type')  # 'customer' oder 'business'
+# class GuestLoginView(APIView):
+#     permission_classes = [AllowAny]
 
-        if guest_type == 'customer':
-            username, password = "andrey", "asdasd"
-        elif guest_type == 'business':
-            username, password = "kevin", "asdasd24"
-        else:
-            return Response({"error": "Ungültiger Gast-Typ"}, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         guest_type = request.data.get('type')  # 'customer' oder 'business'
 
-        user = authenticate(username=username, password=password)
-        if user:
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key, 'user_id': user.id, 'username': user.username, 'role': user.role})
-        return Response({"error": "Ungültige Anmeldedaten"}, status=status.HTTP_400_BAD_REQUEST)
+#         if guest_type == 'customer':
+#             username, password = "guest_customer", "guest"
+#         elif guest_type == 'business':
+#             username, password = "guest_business", "guest"
+#         else:
+#             return Response({"error": "Ungültiger Gast-Typ"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         user = authenticate(username=username, password=password)
+#         if user:
+#             token, _ = Token.objects.get_or_create(user=user)
+#             return Response({'token': token.key, 'user_id': user.id, 'username': user.username, 'role': user.role})
+#         return Response({"error": "Ungültige Anmeldedaten"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfileDetailView(APIView):
